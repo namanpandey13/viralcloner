@@ -15,7 +15,6 @@ export async function POST(req: NextRequest) {
     const { urls } = await req.json();
     
     if (!process.env.APIFY_TOKEN) {
-      console.error("❌ MISSING APIFY_TOKEN");
       return NextResponse.json({ error: 'Server missing APIFY_TOKEN' }, { status: 500 });
     }
 
@@ -32,18 +31,40 @@ export async function POST(req: NextRequest) {
     // 2. Fetch Results
     const { items } = await client.dataset(run.defaultDatasetId).listItems();
 
-    // 3. Group by Author to calculate Baselines
+    // 3. Group by Author
     const postsByAuthor: Record<string, any[]> = {};
+    
     items.forEach((item: any) => {
       if (!item.content) return;
-      const author = item.author?.name || "Unknown";
-      if (!postsByAuthor[author]) postsByAuthor[author] = [];
-      postsByAuthor[author].push(item);
+      
+      // --- ROBUST NAME FINDING LOGIC ---
+      let authorName = "Unknown Creator";
+      
+      // Priority 1: Official Name field
+      if (item.author?.name && item.author.name.trim().length > 0) {
+        authorName = item.author.name;
+      } 
+      // Priority 2: Handle (e.g. "justinwelsh")
+      else if (item.author?.username) {
+        authorName = `@${item.author.username}`;
+      }
+      // Priority 3: Parse from URL
+      else if (item.linkedinUrl) {
+        const match = item.linkedinUrl.match(/in\/([^/]+)/);
+        if (match) authorName = match[1]; 
+      }
+      // ------------------------------------
+
+      // Clean up the name (remove emojis sometimes found in names)
+      authorName = authorName.replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F1E0}-\u{1F1FF}]/gu, '').trim();
+
+      if (!postsByAuthor[authorName]) postsByAuthor[authorName] = [];
+      postsByAuthor[authorName].push(item);
     });
 
     let processedPosts: any[] = [];
 
-    // 4. Calculate Outliers
+    // 4. Calculate Stats & Format
     for (const author in postsByAuthor) {
       const authorPosts = postsByAuthor[author];
       const likes = authorPosts.map(p => p.engagement?.likes || 0);
@@ -55,21 +76,21 @@ export async function POST(req: NextRequest) {
         
         return {
           id: p.id || Math.random().toString(36),
-          author: author,
-          date: p.postedAt?.date || "Unknown",
+          author: author, 
+          handle: p.author?.username || "",
+          date: p.postedAt?.date || new Date().toISOString(),
           likes: postLikes,
           baseline: baseline,
-          multiplier: parseFloat(multiplier.toFixed(1)), // e.g., 2.5
+          multiplier: parseFloat(multiplier.toFixed(1)), 
           text: p.content,
           url: p.linkedinUrl,
-          // Flag as viral if > 1.5x baseline
           isViral: multiplier >= 1.5
         };
       });
       processedPosts = [...processedPosts, ...enriched];
     }
 
-    // Sort: Viral hits first, then by raw likes
+    // Sort: Highest Impact First
     processedPosts.sort((a, b) => b.multiplier - a.multiplier);
 
     return NextResponse.json({ posts: processedPosts });
