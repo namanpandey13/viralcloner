@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { X, Search, Microscope, Loader2, BarChart3, CheckSquare, Square, ChevronRight, AlertCircle, FileText } from 'lucide-react';
+import { X, Search, Microscope, Loader2, BarChart3, CheckSquare, Square, ChevronRight, AlertCircle, FileText, Calendar } from 'lucide-react';
 
 // --- TYPES ---
 interface Post {
@@ -191,8 +191,8 @@ export default function Home() {
             </div>
 
             <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
-                {/* HEADER */}
-                <div className="grid grid-cols-[50px_80px_1fr_150px_100px] bg-slate-50/80 border-b border-slate-200 text-xs font-bold text-slate-500 uppercase tracking-wider py-4 px-4">
+                {/* HEADER - Adjusted Grid Cols */}
+                <div className="grid grid-cols-[50px_70px_1fr_140px_80px] bg-slate-50/80 border-b border-slate-200 text-xs font-bold text-slate-500 uppercase tracking-wider py-4 px-4">
                     <div className="flex items-center justify-center">
                         <button onClick={toggleSelectAll} className="hover:text-blue-600 transition-colors">
                           {selectedIds.size === posts.length && posts.length > 0 ? <CheckSquare size={20} /> : <Square size={20} />}
@@ -216,13 +216,13 @@ export default function Home() {
                       return (
                           <div 
                               key={post.id}
-                              onClick={() => setViewingPost(post)} // Clicking row opens breakdown
+                              onClick={() => setViewingPost(post)} 
                               className={`
-                                  group grid grid-cols-[50px_80px_1fr_150px_100px] items-center py-5 px-4 transition-all cursor-pointer
-                                  ${isSelected ? 'bg-blue-50/40' : 'hover:bg-slate-50'}
+                                  group grid grid-cols-[50px_70px_1fr_140px_80px] items-center py-4 px-4 transition-all cursor-pointer border-b border-slate-50 last:border-0
+                                  ${isSelected ? 'bg-blue-50/40' : 'hover:bg-white hover:shadow-sm'}
                               `}
                           >
-                              {/* CHECKBOX (Stop Propagation so we can select without opening) */}
+                              {/* CHECKBOX */}
                               <div className="flex items-center justify-center">
                                   <button 
                                       onClick={(e) => { e.stopPropagation(); toggleSelection(post.id); }}
@@ -246,7 +246,7 @@ export default function Home() {
                               </div>
 
                               {/* PREVIEW */}
-                              <div className="pr-8">
+                              <div className="pr-6">
                                   <p className="text-sm text-slate-700 font-medium line-clamp-1 truncate leading-relaxed group-hover:text-blue-600 transition-colors">
                                     {post.text}
                                   </p>
@@ -257,9 +257,15 @@ export default function Home() {
                                   </div>
                               </div>
 
-                              {/* AUTHOR */}
-                              <div className="text-sm text-slate-600 font-medium truncate pr-4">
-                                {post.author || "Unknown"}
+                              {/* AUTHOR & DATE */}
+                              <div className="pr-2">
+                                <div className="text-sm text-slate-700 font-medium truncate">
+                                    {post.author || "Unknown"}
+                                </div>
+                                <div className="text-[11px] text-slate-400 flex items-center gap-1 mt-0.5">
+                                    <Calendar size={10} />
+                                    {post.date ? post.date.split('T')[0] : "Recent"}
+                                </div>
                               </div>
 
                               {/* LIKES */}

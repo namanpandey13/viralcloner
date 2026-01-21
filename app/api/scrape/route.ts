@@ -35,27 +35,40 @@ export async function POST(req: NextRequest) {
     const postsByAuthor: Record<string, any[]> = {};
     
     items.forEach((item: any) => {
+      // Skip empty content/reposts if they have no text
       if (!item.content) return;
       
-      // --- ROBUST NAME FINDING LOGIC ---
+      // --- FIXED NAME FINDING LOGIC ---
       let authorName = "Unknown Creator";
       
       // Priority 1: Official Name field
       if (item.author?.name && item.author.name.trim().length > 0) {
         authorName = item.author.name;
       } 
-      // Priority 2: Handle (e.g. "justinwelsh")
+      // Priority 2: Handle from object
       else if (item.author?.username) {
         authorName = `@${item.author.username}`;
       }
-      // Priority 3: Parse from URL
+      // Priority 3: Extract from POST URL (The Fix)
+      // Matches: linkedin.com/posts/justinwelsh_...
       else if (item.linkedinUrl) {
-        const match = item.linkedinUrl.match(/in\/([^/]+)/);
-        if (match) authorName = match[1]; 
+        const postMatch = item.linkedinUrl.match(/posts\/([^_]+)/);
+        const profileMatch = item.linkedinUrl.match(/in\/([^/]+)/);
+        
+        if (postMatch) {
+          authorName = postMatch[1]; // Returns "justinwelsh"
+        } else if (profileMatch) {
+          authorName = profileMatch[1];
+        }
       }
       // ------------------------------------
 
-      // Clean up the name (remove emojis sometimes found in names)
+      // Clean up the name (capitalize first letter if it's a handle)
+      if (!authorName.includes(" ")) {
+        authorName = authorName.charAt(0).toUpperCase() + authorName.slice(1);
+      }
+      
+      // Remove emojis
       authorName = authorName.replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F1E0}-\u{1F1FF}]/gu, '').trim();
 
       if (!postsByAuthor[authorName]) postsByAuthor[authorName] = [];
