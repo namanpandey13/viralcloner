@@ -35,41 +35,37 @@ export async function POST(req: NextRequest) {
     const postsByAuthor: Record<string, any[]> = {};
     
     items.forEach((item: any) => {
-      // Skip empty content/reposts if they have no text
       if (!item.content) return;
       
-      // --- FIXED NAME FINDING LOGIC ---
+      // --- CRITICAL FIX: FIND THE NAME ---
       let authorName = "Unknown Creator";
       
-      // Priority 1: Official Name field
+      // 1. Try Official Name
       if (item.author?.name && item.author.name.trim().length > 0) {
         authorName = item.author.name;
       } 
-      // Priority 2: Handle from object
+      // 2. Try Handle
       else if (item.author?.username) {
         authorName = `@${item.author.username}`;
       }
-      // Priority 3: Extract from POST URL (The Fix)
-      // Matches: linkedin.com/posts/justinwelsh_...
+      // 3. Try URL (This fixes the missing Justin Welsh name)
       else if (item.linkedinUrl) {
+        // Matches: linkedin.com/in/justinwelsh OR linkedin.com/posts/justinwelsh_...
         const postMatch = item.linkedinUrl.match(/posts\/([^_]+)/);
         const profileMatch = item.linkedinUrl.match(/in\/([^/]+)/);
         
         if (postMatch) {
-          authorName = postMatch[1]; // Returns "justinwelsh"
+          authorName = postMatch[1];
         } else if (profileMatch) {
           authorName = profileMatch[1];
         }
       }
-      // ------------------------------------
-
-      // Clean up the name (capitalize first letter if it's a handle)
-      if (!authorName.includes(" ")) {
+      
+      // Capitalize first letter if we grabbed it from URL
+      if (authorName && !authorName.includes(" ")) {
         authorName = authorName.charAt(0).toUpperCase() + authorName.slice(1);
       }
-      
-      // Remove emojis
-      authorName = authorName.replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F1E0}-\u{1F1FF}]/gu, '').trim();
+      // ------------------------------------
 
       if (!postsByAuthor[authorName]) postsByAuthor[authorName] = [];
       postsByAuthor[authorName].push(item);
@@ -77,7 +73,7 @@ export async function POST(req: NextRequest) {
 
     let processedPosts: any[] = [];
 
-    // 4. Calculate Stats & Format
+    // 4. Calculate Stats
     for (const author in postsByAuthor) {
       const authorPosts = postsByAuthor[author];
       const likes = authorPosts.map(p => p.engagement?.likes || 0);
@@ -103,7 +99,7 @@ export async function POST(req: NextRequest) {
       processedPosts = [...processedPosts, ...enriched];
     }
 
-    // Sort: Highest Impact First
+    // Sort by Viral Score
     processedPosts.sort((a, b) => b.multiplier - a.multiplier);
 
     return NextResponse.json({ posts: processedPosts });

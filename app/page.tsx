@@ -191,8 +191,8 @@ export default function Home() {
             </div>
 
             <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
-                {/* HEADER - Adjusted Grid Cols */}
-                <div className="grid grid-cols-[50px_70px_1fr_140px_80px] bg-slate-50/80 border-b border-slate-200 text-xs font-bold text-slate-500 uppercase tracking-wider py-4 px-4">
+                {/* HEADER - Updated Column Widths */}
+                <div className="grid grid-cols-[50px_70px_1fr_150px_80px] bg-slate-50/80 border-b border-slate-200 text-xs font-bold text-slate-500 uppercase tracking-wider py-4 px-4">
                     <div className="flex items-center justify-center">
                         <button onClick={toggleSelectAll} className="hover:text-blue-600 transition-colors">
                           {selectedIds.size === posts.length && posts.length > 0 ? <CheckSquare size={20} /> : <Square size={20} />}
@@ -218,7 +218,7 @@ export default function Home() {
                               key={post.id}
                               onClick={() => setViewingPost(post)} 
                               className={`
-                                  group grid grid-cols-[50px_70px_1fr_140px_80px] items-center py-4 px-4 transition-all cursor-pointer border-b border-slate-50 last:border-0
+                                  group grid grid-cols-[50px_70px_1fr_150px_80px] items-center py-4 px-4 transition-all cursor-pointer border-b border-slate-50 last:border-0
                                   ${isSelected ? 'bg-blue-50/40' : 'hover:bg-white hover:shadow-sm'}
                               `}
                           >
