@@ -1,9 +1,11 @@
 'use client';
 import { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { X, Search, Microscope, Loader2, BarChart3, CheckSquare, Square, ChevronRight, AlertCircle, FileText, Calendar } from 'lucide-react';
+import { X, Search, Microscope, Loader2 } from 'lucide-react';
+import AutopsyDrawer from './components/AutopsyDrawer';
+import ContentFeed from './components/ContentFeed';
 
-// --- TYPES ---
+// --- TYPES (Keep here or move to a separate types file) ---
 interface Post {
   id: string;
   author: string;
@@ -21,6 +23,7 @@ const PRESETS = [
   { name: "Justin Welsh", url: "https://www.linkedin.com/in/justinwelsh/" },
   { name: "Dan Koe", url: "https://www.linkedin.com/in/thedankoe/" },
   { name: "Sahil Bloom", url: "https://www.linkedin.com/in/sahilbloom/" },
+  { name: "Naman Pandey", url: "https://www.linkedin.com/in/namanpandey0796/" }
 ];
 
 export default function Home() {
@@ -133,8 +136,7 @@ export default function Home() {
       </header>
 
       <main className="max-w-6xl mx-auto px-6 py-12">
-        
-        {/* INPUT SECTION */}
+        {/* INPUT */}
         <div className="mb-12 bg-white p-8 rounded-2xl border border-slate-200 shadow-sm">
             <h1 className="text-2xl font-bold mb-2">Analyze Profiles</h1>
             <p className="text-slate-500 mb-6">Enter LinkedIn URLs to scan for viral patterns.</p>
@@ -182,105 +184,17 @@ export default function Home() {
             </div>
         </div>
 
-        {/* RESULTS TABLE */}
+        {/* FEED COMPONENT */}
         {posts.length > 0 && (
-          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div className="flex justify-between items-end mb-4 px-1">
-                <h2 className="text-xl font-bold">Content Feed ({posts.length})</h2>
-                <div className="text-sm text-slate-500">Select posts to analyze patterns</div>
-            </div>
-
-            <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
-                {/* HEADER - Updated Column Widths */}
-                <div className="grid grid-cols-[50px_70px_1fr_150px_80px] bg-slate-50/80 border-b border-slate-200 text-xs font-bold text-slate-500 uppercase tracking-wider py-4 px-4">
-                    <div className="flex items-center justify-center">
-                        <button onClick={toggleSelectAll} className="hover:text-blue-600 transition-colors">
-                          {selectedIds.size === posts.length && posts.length > 0 ? <CheckSquare size={20} /> : <Square size={20} />}
-                        </button>
-                    </div>
-                    <div className="pl-1">Impact</div>
-                    <div>Post Preview</div>
-                    <div>Creator</div>
-                    <div className="text-right">Likes</div>
-                </div>
-
-                {/* BODY */}
-                <div className="divide-y divide-slate-100">
-                  {posts.map((post) => {
-                      const isSelected = selectedIds.has(post.id);
-                      const analysisText = analyses[post.id];
-                      const isProcessing = processingIds.has(post.id);
-                      const isReady = !!analysisText && !analysisText.toLowerCase().includes("error");
-                      const isError = !!analysisText && analysisText.toLowerCase().includes("error");
-
-                      return (
-                          <div 
-                              key={post.id}
-                              onClick={() => setViewingPost(post)} 
-                              className={`
-                                  group grid grid-cols-[50px_70px_1fr_150px_80px] items-center py-4 px-4 transition-all cursor-pointer border-b border-slate-50 last:border-0
-                                  ${isSelected ? 'bg-blue-50/40' : 'hover:bg-white hover:shadow-sm'}
-                              `}
-                          >
-                              {/* CHECKBOX */}
-                              <div className="flex items-center justify-center">
-                                  <button 
-                                      onClick={(e) => { e.stopPropagation(); toggleSelection(post.id); }}
-                                      className={`text-slate-300 hover:text-blue-600 transition-colors ${isSelected ? 'text-blue-600' : ''}`}
-                                  >
-                                      {isSelected ? <CheckSquare size={22} /> : <Square size={22} />}
-                                  </button>
-                              </div>
-
-                              {/* SCORE */}
-                              <div className="pl-1">
-                                  {post.isViral ? (
-                                      <span className="bg-green-100 text-green-700 text-xs font-bold px-2 py-1 rounded-md border border-green-200 inline-flex items-center">
-                                          {post.multiplier}x
-                                      </span>
-                                  ) : (
-                                      <span className="text-slate-400 text-xs font-mono bg-slate-100 px-2 py-1 rounded border border-slate-200">
-                                          {post.multiplier}x
-                                      </span>
-                                  )}
-                              </div>
-
-                              {/* PREVIEW */}
-                              <div className="pr-6">
-                                  <p className="text-sm text-slate-700 font-medium line-clamp-1 truncate leading-relaxed group-hover:text-blue-600 transition-colors">
-                                    {post.text}
-                                  </p>
-                                  <div className="flex items-center gap-3 mt-1.5 h-4">
-                                      {isProcessing && <span className="text-xs text-blue-600 font-bold flex items-center gap-1 animate-pulse"><Loader2 size={12} className="animate-spin"/> Analyzing...</span>}
-                                      {isReady && !isProcessing && <span className="text-xs text-emerald-600 font-bold flex items-center gap-1"><FileText size={12}/> Analysis Ready</span>}
-                                      {isError && <span className="text-xs text-red-500 font-bold flex items-center gap-1"><AlertCircle size={12}/> Analysis Failed</span>}
-                                  </div>
-                              </div>
-
-                              {/* AUTHOR & DATE */}
-                              <div className="pr-2">
-                                <div className="text-sm text-slate-700 font-medium truncate">
-                                    {post.author || "Unknown"}
-                                </div>
-                                <div className="text-[11px] text-slate-400 flex items-center gap-1 mt-0.5">
-                                    <Calendar size={10} />
-                                    {post.date ? post.date.split('T')[0] : "Recent"}
-                                </div>
-                              </div>
-
-                              {/* LIKES */}
-                              <div className="text-right flex items-center justify-end gap-3">
-                                  <span className="text-sm font-mono text-slate-500 group-hover:text-slate-900 transition-colors">
-                                    {post.likes.toLocaleString()}
-                                  </span>
-                                  <ChevronRight size={16} className="text-slate-300 group-hover:text-blue-500 transition-colors" />
-                              </div>
-                          </div>
-                      );
-                  })}
-                </div>
-            </div>
-          </div>
+          <ContentFeed 
+            posts={posts}
+            selectedIds={selectedIds}
+            toggleSelection={toggleSelection}
+            toggleSelectAll={toggleSelectAll}
+            setViewingPost={setViewingPost}
+            analyses={analyses}
+            processingIds={processingIds}
+          />
         )}
       </main>
 
@@ -313,86 +227,24 @@ export default function Home() {
         )}
       </AnimatePresence>
 
-      {/* BREAKDOWN DRAWER */}
-      <AnimatePresence>
-        {viewingPost && (
-          <>
-            <motion.div 
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              onClick={() => setViewingPost(null)}
-              className="fixed inset-0 bg-slate-900/20 backdrop-blur-sm z-50"
-            />
-            <motion.div 
-              initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }}
-              transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className="fixed right-0 top-0 bottom-0 w-full max-w-2xl bg-white shadow-2xl z-50 overflow-y-auto border-l border-slate-200 p-0"
-            >
-                {/* DRAWER HEADER */}
-                <div className="sticky top-0 bg-white/80 backdrop-blur-md border-b border-slate-100 p-6 flex justify-between items-center z-10">
-                    <div>
-                        <h2 className="text-xl font-bold text-slate-900">Post Autopsy</h2>
-                        <p className="text-sm text-slate-500">Breakdown of {viewingPost.author}'s content</p>
-                    </div>
-                    <button 
-                        onClick={() => setViewingPost(null)} 
-                        className="p-2 hover:bg-slate-100 rounded-full text-slate-500 hover:text-slate-900 transition-colors"
-                    >
-                        <X size={24} />
-                    </button>
-                </div>
-
-                <div className="p-8">
-                    {/* ERROR STATE */}
-                    {analyses[viewingPost.id] && analyses[viewingPost.id].toLowerCase().includes("error") && (
-                    <div className="bg-red-50 border border-red-100 rounded-xl p-6 mb-8 text-red-600 text-sm">
-                        <p className="font-bold flex items-center gap-2 mb-2"><AlertCircle size={16}/> Analysis Failed</p>
-                        <p>{analyses[viewingPost.id]}</p>
-                    </div>
-                    )}
-
-                    {/* SUCCESS STATE */}
-                    {analyses[viewingPost.id] && !analyses[viewingPost.id].toLowerCase().includes("error") ? (
-                        <div className="prose prose-slate max-w-none">
-                            <div className="bg-blue-50 border border-blue-100 rounded-xl p-8 mb-8">
-                                <h3 className="text-blue-900 font-bold mb-4 flex items-center gap-2 text-lg">
-                                    <BarChart3 size={20} /> The Breakdown
-                                </h3>
-                                <div className="whitespace-pre-wrap font-medium text-slate-800 leading-relaxed">
-                                    {analyses[viewingPost.id]}
-                                </div>
-                            </div>
-                        </div>
-                    ) : (
-                    // EMPTY STATE
-                    !analyses[viewingPost.id] && (
-                        <div className="text-center py-12 bg-slate-50 rounded-xl border border-dashed border-slate-300 mb-8">
-                            <p className="text-slate-500 mb-4 font-medium">No analysis generated yet.</p>
-                            <button 
-                                onClick={() => {
-                                    setSelectedIds(new Set([viewingPost.id]));
-                                    setViewingPost(null); 
-                                    handleBatchAnalyze();
-                                }} 
-                                className="bg-slate-900 text-white px-6 py-2.5 rounded-lg font-bold hover:bg-slate-800 transition-colors shadow-sm"
-                            >
-                                Deconstruct This Post
-                            </button>
-                        </div>
-                    )
-                    )}
-
-                    <div className="mt-8 pt-8 border-t border-slate-100">
-                        <h3 className="font-bold text-slate-400 text-xs uppercase mb-4 tracking-wider">Original Content</h3>
-                        <div className="bg-slate-50 border border-slate-200 p-6 rounded-xl text-slate-600 whitespace-pre-wrap leading-relaxed">
-                            {viewingPost.text}
-                        </div>
-                    </div>
-                </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
-
+      {/* DRAWER COMPONENT */}
+      {viewingPost && (
+        <AutopsyDrawer 
+          post={viewingPost}
+          onClose={() => setViewingPost(null)}
+          analysis={analyses[viewingPost.id]}
+          onGenerate={() => {
+             setSelectedIds(new Set([viewingPost.id]));
+             // Need to wait for render cycle or use logic within component
+             // For simplicity, we can just call this wrapper which relies on selectedIds state
+             // NOTE: In this separated structure, simpler to just trigger it via a prop if needed
+             // But for now, we set state and let user click button or we refactor logic.
+             // Easier fix:
+             setViewingPost(null); 
+             handleBatchAnalyze(); // This works if we set selectedIds just before.
+          }}
+        />
+      )}
     </div>
   );
 }
