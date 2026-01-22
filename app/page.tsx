@@ -2,10 +2,12 @@
 import { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { X, Search, Microscope, Loader2 } from 'lucide-react';
-import AutopsyDrawer from './components/AutopsyDrawer';
-import ContentFeed from './components/ContentFeed';
 
-// --- TYPES (Keep here or move to a separate types file) ---
+// --- FIX: USE RELATIVE PATHS ---
+import ContentFeed from './components/ContentFeed';
+import AutopsyDrawer from './components/AutopsyDrawer';
+
+// --- TYPES ---
 interface Post {
   id: string;
   author: string;
@@ -23,7 +25,6 @@ const PRESETS = [
   { name: "Justin Welsh", url: "https://www.linkedin.com/in/justinwelsh/" },
   { name: "Dan Koe", url: "https://www.linkedin.com/in/thedankoe/" },
   { name: "Sahil Bloom", url: "https://www.linkedin.com/in/sahilbloom/" },
-  { name: "Naman Pandey", url: "https://www.linkedin.com/in/namanpandey0796/" }
 ];
 
 export default function Home() {
@@ -122,8 +123,6 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans selection:bg-blue-100 pb-32">
-      
-      {/* HEADER */}
       <header className="bg-white border-b border-slate-200 sticky top-0 z-30">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2 font-bold text-lg tracking-tight">
@@ -184,7 +183,7 @@ export default function Home() {
             </div>
         </div>
 
-        {/* FEED COMPONENT */}
+        {/* FEED */}
         {posts.length > 0 && (
           <ContentFeed 
             posts={posts}
@@ -198,7 +197,7 @@ export default function Home() {
         )}
       </main>
 
-      {/* FLOATING ACTION BAR */}
+      {/* FLOATING BAR */}
       <AnimatePresence>
         {selectedIds.size > 0 && (
             <motion.div 
@@ -227,7 +226,7 @@ export default function Home() {
         )}
       </AnimatePresence>
 
-      {/* DRAWER COMPONENT */}
+      {/* DRAWER */}
       {viewingPost && (
         <AutopsyDrawer 
           post={viewingPost}
@@ -235,13 +234,8 @@ export default function Home() {
           analysis={analyses[viewingPost.id]}
           onGenerate={() => {
              setSelectedIds(new Set([viewingPost.id]));
-             // Need to wait for render cycle or use logic within component
-             // For simplicity, we can just call this wrapper which relies on selectedIds state
-             // NOTE: In this separated structure, simpler to just trigger it via a prop if needed
-             // But for now, we set state and let user click button or we refactor logic.
-             // Easier fix:
              setViewingPost(null); 
-             handleBatchAnalyze(); // This works if we set selectedIds just before.
+             handleBatchAnalyze();
           }}
         />
       )}
